@@ -294,7 +294,7 @@ function deploy_build_item() {
     fi
 
     if [ ! -f ".deploy_build_flag" ]; then
-        pdsh -S -w "$build_node" "cd $PWD && make -j $build_cpus"
+        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_INST}/lib:${LIBEV_INST}/lib:${PMIX_INST}/lib:${LD_LIBRARY_PATH} make -j $build_cpus"
         ret=$?
         if [ "$ret" != "0" ]; then
             echo_error $LINENO "\"$item\" Build error. Cannot continue."
