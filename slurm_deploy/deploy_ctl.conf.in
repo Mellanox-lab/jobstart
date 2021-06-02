@@ -20,11 +20,11 @@ BUILD_DIR=@deploy_build_dir@             # build directory
 INSTALL_DIR=@deploy_install_dir@         # install directory
 
 # example:
-#REPO_NAME=<repo_name>
-#REPO_PACK=<repo_pack_url>.tar.gz
+#REPO_DEPLOY_NAME=<repo_name>
+#REPO_DEPLOY_PACK=<repo_pack_url>.tar.gz
 # or:
-#REPO_URL=<repo_github>
+#REPO_DEPLOY_URL=<repo_github>
 # optional:
-#REPO_BRANCH=<branch>
-#REPO_COMMIT=<hash>
-#REPO_CONF="--enable-debug"
+#REPO_DEPLOY_BRANCH=<branch>
+#REPO_DEPLOY_COMMIT=<hash>
+#REPO_DEPLOY_CONF="--enable-debug"
