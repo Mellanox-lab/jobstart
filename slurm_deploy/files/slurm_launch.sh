@@ -10,9 +10,9 @@
 
 #!/bin/bash -x
 
-SLURM_INST=$1
+SLURM_DEPLOY_INST=$1
 
 ulimit -c unlimited
 
-cd $SLURM_INST/sbin
+cd $SLURM_DEPLOY_INST/sbin
 ./slurmd

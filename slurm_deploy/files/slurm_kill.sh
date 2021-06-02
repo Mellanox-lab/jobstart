@@ -10,15 +10,15 @@
 
 #!/bin/bash -x
 
-SLURM_INST=$1
+SLURM_DEPLOY_INST=$1
 
 function kill_binary()
 {
     name=$1
-    if [ ! -f "$SLURM_INST/var/$name.pid" ]; then
+    if [ ! -f "$SLURM_DEPLOY_INST/var/$name.pid" ]; then
         return 0
     fi
-    pid=`cat $SLURM_INST/var/$name.pid`
+    pid=`cat $SLURM_DEPLOY_INST/var/$name.pid`
     need_kill=`ps ax | grep "$pid" | grep $name`
     if [ -n "$need_kill" ]; then
         kill -KILL $pid

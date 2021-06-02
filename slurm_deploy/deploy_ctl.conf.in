@@ -11,7 +11,7 @@
 #!/bin/bash
 
 NODE_LIST=@node_list@
-SLURM_USER=@slurm_user@
+SLURM_DEPLOY_USER=@slurm_user@
 
 # common deploy settings
 DEPLOY_DIR=@deploy_dir@                  # deploy work directory

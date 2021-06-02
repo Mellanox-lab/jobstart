@@ -72,7 +72,7 @@ function slurm_build_all(){
     fi
 
     cd $tdir
-    $SLURM_SRC/configure --prefix=$SLURM_DEPLOY_INST --with-munge=/usr/ --with-pmix=$PMIX_DEPLOY_INST $hwloc_append $ucx_append
+    $SLURM_DEPLOY_SRC/configure --prefix=$SLURM_DEPLOY_INST --with-munge=/usr/ --with-pmix=$PMIX_DEPLOY_INST $hwloc_append $ucx_append
     make -j 20
     make -j 20 install
 
@@ -128,7 +128,7 @@ function slurm_build_plugin()
 
     cd $tdir
     eval _pmix_inst=\$PMIX_DEPLOY_INST_$1
-    $SLURM_SRC/configure --prefix=$SLURM_DEPLOY_INST --with-munge=/usr/ --with-pmix=${_pmix_inst}
+    $SLURM_DEPLOY_SRC/configure --prefix=$SLURM_DEPLOY_INST --with-munge=/usr/ --with-pmix=${_pmix_inst}
     cd src/plugins/mpi/pmix/
     make install
 
@@ -139,7 +139,7 @@ function slurm_build()
 {
     slurm_build_all
     for i in `seq 2 10`; do
-        eval var=\$PMIX_INST_$i
+        eval var=\$PMIX_DEPLOY_INST_$i
         if [ -n "$var" ]; then
             slurm_build_plugin $i
         fi
