@@ -183,15 +183,15 @@ function deploy_item_save_env() {
     repo_src=$3
     repo_env_prefix=$4
 
-    eval "${repo_env_prefix}_INST=$repo_inst"
-    eval "${repo_env_prefix}_SRC=$repo_src"
+    eval "${repo_env_prefix}_DEPLOY_INST=$repo_inst"
+    eval "${repo_env_prefix}_DEPLOY_SRC=$repo_src"
 
     if [ -n "$repo_inst" ]; then
-        echo "${repo_env_prefix}_INST=$repo_inst # $repo_name install" >>"$DEPLOY_DIR/.deploy_env"
+        echo "${repo_env_prefix}_DEPLOY_INST=$repo_inst # $repo_name install" >>"$DEPLOY_DIR/.deploy_env"
         echo "$repo_name $repo_inst" >>"$DEPLOY_DIR/.deploy_repo.lst"
     fi
     if [ -n "$repo_src" ]; then
-        echo "${repo_env_prefix}_SRC=$repo_src # $repo_name source" >>"$DEPLOY_DIR/.deploy_env"
+        echo "${repo_env_prefix}_DEPLOY_SRC=$repo_src # $repo_name source" >>"$DEPLOY_DIR/.deploy_env"
     fi
 }
 
