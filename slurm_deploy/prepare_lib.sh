@@ -27,8 +27,8 @@ function echo_error()
 
 function sanity_check()
 {
-#    tmp=`echo $SLURM_INST | grep ^"/tmp/"`
-    tmp=`echo $SLURM_INST`
+#    tmp=`echo $SLURM_DEPLOY_INST | grep ^"/tmp/"`
+    tmp=`echo $SLURM_DEPLOY_INST`
     local sanity_error=""
     if  [ -z "$tmp" ]; then
         sanity_error=1
@@ -48,8 +48,8 @@ function slurm_finalize_install()
         exit 1
     fi
     #slurm_prepare_conf
-    mkdir -p $SLURM_INST/var
-    mkdir -p $SLURM_INST/tmp
+    mkdir -p $SLURM_DEPLOY_INST/var
+    mkdir -p $SLURM_DEPLOY_INST/tmp
 }
 
 function slurm_build_all(){
@@ -63,16 +63,16 @@ function slurm_build_all(){
     mkdir -p $tdir
 
     local hwloc_append=""
-    if [ -n "$HWLOC_INST" ]; then
-        hwloc_append="--with-hwloc=$HWLOC_INST"
+    if [ -n "$HWLOC_DEPLOY_INST" ]; then
+        hwloc_append="--with-hwloc=$HWLOC_DEPLOY_INST"
     fi
     local ucx_append=""
-    if [ -n "$UCX_INST" ]; then
-        ucx_append="--with-ucx=$UCX_INST"
+    if [ -n "$UCX_DEPLOY_INST" ]; then
+        ucx_append="--with-ucx=$UCX_DEPLOY_INST"
     fi
 
     cd $tdir
-    $SLURM_SRC/configure --prefix=$SLURM_INST --with-munge=/usr/ --with-pmix=$PMIX_INST $hwloc_append $ucx_append
+    $SLURM_DEPLOY_SRC/configure --prefix=$SLURM_DEPLOY_INST --with-munge=/usr/ --with-pmix=$PMIX_DEPLOY_INST $hwloc_append $ucx_append
     make -j 20
     make -j 20 install
 
@@ -84,8 +84,8 @@ function slurm_build_remove() {
         echo_error $LINENO "Error sanity check"
         exit 1
     fi
-    if [ -d "$SLURM_SRC/.build_tmp" ]; then
-        rm -rf $SLURM_SRC/.build_tmp
+    if [ -d "$SLURM_DEPLOY_SRC/.build_tmp" ]; then
+        rm -rf $SLURM_DEPLOY_SRC/.build_tmp
     fi
 }
 
@@ -94,9 +94,9 @@ function slurm_build_update() {
         echo_error $LINENO "Error sanity check"
         exit 1
     fi
-    if [ -d "$SLURM_SRC/.build_tmp" ]; then
+    if [ -d "$SLURM_DEPLOY_SRC/.build_tmp" ]; then
         sdir=`pwd`
-        cd $SLURM_SRC/.build_tmp
+        cd $SLURM_DEPLOY_SRC/.build_tmp
         make -j20 clean
         make -j20
         make -j20 install
@@ -109,9 +109,9 @@ function slurm_build_update_light() {
         echo_error $LINENO "Error sanity check"
         exit 1
     fi
-    if [ -d "$SLURM_SRC/.build_tmp" ]; then
+    if [ -d "$SLURM_DEPLOY_SRC/.build_tmp" ]; then
         sdir=`pwd`
-        cd $SLURM_SRC/.build_tmp
+        cd $SLURM_DEPLOY_SRC/.build_tmp
         make -j20
         make -j20 install
         cd $sdir
@@ -127,8 +127,8 @@ function slurm_build_plugin()
     mkdir -p $tdir
 
     cd $tdir
-    eval _pmix_inst=\$PMIX_INST_$1
-    $SLURM_SRC/configure --prefix=$SLURM_INST --with-munge=/usr/ --with-pmix=${_pmix_inst}
+    eval _pmix_inst=\$PMIX_DEPLOY_INST_$1
+    $SLURM_DEPLOY_SRC/configure --prefix=$SLURM_DEPLOY_INST --with-munge=/usr/ --with-pmix=${_pmix_inst}
     cd src/plugins/mpi/pmix/
     make install
 
@@ -139,7 +139,7 @@ function slurm_build()
 {
     slurm_build_all
     for i in `seq 2 10`; do
-        eval var=\$PMIX_INST_$i
+        eval var=\$PMIX_DEPLOY_INST_$i
         if [ -n "$var" ]; then
             slurm_build_plugin $i
         fi
@@ -178,8 +178,8 @@ function exec_remote_as_user_nodes()
     nodes=$1
     shift
     pdsh_bin=`which pdsh`
-    if [ `whoami` != "$SLURM_USER" ]; then
-        sudo su - $SLURM_USER -c "$pdsh_bin -w $nodes $@"
+    if [ `whoami` != "$SLURM_DEPLOY_USER" ]; then
+        sudo su - $SLURM_DEPLOY_USER -c "$pdsh_bin -w $nodes $@"
     else
         $pdsh_bin -w $nodes $@
     fi
@@ -209,7 +209,7 @@ function slurm_stop_instances()
         echo_error $LINENO "Error sanity check"
         exit 1
     fi
-    exec_remote_as_user "$FILES/slurm_kill.sh $SLURM_INST"
+    exec_remote_as_user "$FILES/slurm_kill.sh $SLURM_DEPLOY_INST"
 }
 
 function slurm_cleanup_installation_nodes()
@@ -222,12 +222,12 @@ function slurm_cleanup_installation_nodes()
     slurm_stop_instances
 
     # get back the rights on the files
-    if [ `whoami` != "$SLURM_USER" ]; then
-        exec_remote_nodes $1 sudo chown -R `whoami` $SLURM_INST
+    if [ `whoami` != "$SLURM_DEPLOY_USER" ]; then
+        exec_remote_nodes $1 sudo chown -R `whoami` $SLURM_DEPLOY_INST
     fi
 
     # Remove the files
-    exec_remote_nodes $1 rm -Rf --preserve-root $SLURM_INST
+    exec_remote_nodes $1 rm -Rf --preserve-root $SLURM_DEPLOY_INST
 }
 
 function slurm_cleanup_installation()
@@ -274,29 +274,29 @@ function slurm_distribute()
     if [ ! -z $head_node ]; then
         nodes=`get_node_list_wo_head`
         # Cleanup previous installations
-        slurm_cleanup_installation_nodes $nodes $SLURM_INST
+        slurm_cleanup_installation_nodes $nodes $SLURM_DEPLOY_INST
     else
         # Cleanup previous installations
-        slurm_cleanup_installation $SLURM_INST
+        slurm_cleanup_installation $SLURM_DEPLOY_INST
     fi
 
     # Prepare the FS
-    base_dir=`dirname $SLURM_INST`
-    exec_remote_nodes $nodes mkdir -p $SLURM_INST
-    
+    base_dir=`dirname $SLURM_DEPLOY_INST`
+    exec_remote_nodes $nodes mkdir -p $SLURM_DEPLOY_INST
+
     # Copy & fix the installation files
-    copy_remote_nodes $nodes $SLURM_INST/bin $SLURM_INST
-    copy_remote_nodes $nodes $SLURM_INST/etc $SLURM_INST
-    copy_remote_nodes $nodes $SLURM_INST/include $SLURM_INST
-    copy_remote_nodes $nodes $SLURM_INST/lib $SLURM_INST
-    copy_remote_nodes $nodes $SLURM_INST/sbin $SLURM_INST
-    copy_remote_nodes $nodes $SLURM_INST/share $SLURM_INST
-    exec_remote_nodes $nodes mkdir "$SLURM_INST/var/"
-    exec_remote_nodes $nodes mkdir "$SLURM_INST/tmp/"
+    copy_remote_nodes $nodes $SLURM_DEPLOY_INST/bin $SLURM_DEPLOY_INST
+    copy_remote_nodes $nodes $SLURM_DEPLOY_INST/etc $SLURM_DEPLOY_INST
+    copy_remote_nodes $nodes $SLURM_DEPLOY_INST/include $SLURM_DEPLOY_INST
+    copy_remote_nodes $nodes $SLURM_DEPLOY_INST/lib $SLURM_DEPLOY_INST
+    copy_remote_nodes $nodes $SLURM_DEPLOY_INST/sbin $SLURM_DEPLOY_INST
+    copy_remote_nodes $nodes $SLURM_DEPLOY_INST/share $SLURM_DEPLOY_INST
+    exec_remote_nodes $nodes mkdir "$SLURM_DEPLOY_INST/var/"
+    exec_remote_nodes $nodes mkdir "$SLURM_DEPLOY_INST/tmp/"
 
     # Give up rights on this directory to the SLURM user
-    if [ `whoami` != "$SLURM_USER" ]; then
-        exec_remote_nodes $nodes sudo chown -R $SLURM_USER $SLURM_INST
+    if [ `whoami` != "$SLURM_DEPLOY_USER" ]; then
+        exec_remote_nodes $nodes sudo chown -R $SLURM_DEPLOY_USER $SLURM_DEPLOY_INST
     fi
 }
 
@@ -308,5 +308,5 @@ function slurm_launch()
     fi
     nodes=`get_node_list`
     # launch as SLURM USER
-    exec_remote_as_user_nodes $nodes "$FILES/slurm_launch.sh $SLURM_INST"
+    exec_remote_as_user_nodes $nodes "$FILES/slurm_launch.sh $SLURM_DEPLOY_INST"
 }

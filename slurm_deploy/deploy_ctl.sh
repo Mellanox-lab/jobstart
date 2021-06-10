@@ -183,39 +183,39 @@ function deploy_item_save_env() {
     repo_src=$3
     repo_env_prefix=$4
 
-    eval "${repo_env_prefix}_INST=$repo_inst"
-    eval "${repo_env_prefix}_SRC=$repo_src"
+    eval "${repo_env_prefix}_DEPLOY_INST=$repo_inst"
+    eval "${repo_env_prefix}_DEPLOY_SRC=$repo_src"
 
     if [ -n "$repo_inst" ]; then
-        echo "${repo_env_prefix}_INST=$repo_inst # $repo_name install" >>"$DEPLOY_DIR/.deploy_env"
+        echo "${repo_env_prefix}_DEPLOY_INST=$repo_inst # $repo_name install" >>"$DEPLOY_DIR/.deploy_env"
         echo "$repo_name $repo_inst" >>"$DEPLOY_DIR/.deploy_repo.lst"
     fi
     if [ -n "$repo_src" ]; then
-        echo "${repo_env_prefix}_SRC=$repo_src # $repo_name source" >>"$DEPLOY_DIR/.deploy_env"
+        echo "${repo_env_prefix}_DEPLOY_SRC=$repo_src # $repo_name source" >>"$DEPLOY_DIR/.deploy_env"
     fi
 }
 
 function deploy_source_prepare() {
     deploy_item_reset_env
     #             github url                                 prefix         branch      commit      config
-    item_download "hwloc" "$HWLOC_PACK" "$HWLOC_URL" "$HWLOC_INST" "$HWLOC_BRANCH" "$HWLOC_COMMIT" "$HWLOC_CONF"
+    item_download "hwloc" "$HWLOC_DEPLOY_PACK" "$HWLOC_DEPLOY_URL" "$HWLOC_DEPLOY_INST" "$HWLOC_DEPLOY_BRANCH" "$HWLOC_DEPLOY_COMMIT" "$HWLOC_DEPLOY_CONF"
     deploy_item_save_env "$REPO_NAME" "$REPO_INST" "$REPO_SRC" "HWLOC"
 
-    item_download "libevent" "$LIBEV_PACK" "$LIBEV_URL" "$LIBEV_INST" "$LIBEV_BRANCH" "$LIBEV_COMMIT" "$LIBEV_CONF"
+    item_download "libevent" "$LIBEV_DEPLOY_PACK" "$LIBEV_DEPLOY_URL" "$LIBEV_DEPLOY_INST" "$LIBEV_DEPLOY_BRANCH" "$LIBEV_DEPLOY_COMMIT" "$LIBEV_DEPLOY_CONF"
     deploy_item_save_env "$REPO_NAME" "$REPO_INST" "$REPO_SRC" "LIBEV"
 
-    item_download "pmix" "$PMIX_PACK" "$PMIX_URL" "$PMIX_INST" "$PMIX_BRANCH" "$PMIX_COMMIT" "$PMIX_CONF --with-libevent=$LIBEV_INST"
+    item_download "pmix" "$PMIX_DEPLOY_PACK" "$PMIX_DEPLOY_URL" "$PMIX_DEPLOY_INST" "$PMIX_DEPLOY_BRANCH" "$PMIX_DEPLOY_COMMIT" "$PMIX_DEPLOY_CONF --with-libevent=$LIBEV_DEPLOY_INST"
     deploy_item_save_env "$REPO_NAME" "$REPO_INST" "$REPO_SRC" "PMIX"
 
-    item_download "ucx" "$UCX_PACK" "$UCX_URL" "$UCX_INST" "$UCX_BRANCH" "$UCX_COMMIT" "$UCX_CONF"
+    item_download "ucx" "$UCX_DEPLOY_PACK" "$UCX_DEPLOY_URL" "$UCX_DEPLOY_INST" "$UCX_DEPLOY_BRANCH" "$UCX_DEPLOY_COMMIT" "$UCX_DEPLOY_CONF"
     deploy_item_save_env "$REPO_NAME" "$REPO_INST" "$REPO_SRC" "UCX"
 
-    item_download "slurm" "$SLURM_PACK" "$SLURM_URL" "$SLURM_INST" "$SLURM_BRANCH" "$SLURM_COMMIT" "$SLURM_CONF --with-ucx=$UCX_INST \
- --with-pmix=$PMIX_INST --with-hwloc=$HWLOC_INST --with-munge=$MUNGE_INST"
+    item_download "slurm" "$SLURM_DEPLOY_PACK" "$SLURM_DEPLOY_URL" "$SLURM_DEPLOY_INST" "$SLURM_DEPLOY_BRANCH" "$SLURM_DEPLOY_COMMIT" "$SLURM_DEPLOY_CONF --with-ucx=$UCX_DEPLOY_INST \
+ --with-pmix=$PMIX_DEPLOY_INST --with-hwloc=$HWLOC_DEPLOY_INST --with-munge=$MUNGE_INST"
     deploy_item_save_env "$REPO_NAME" "$REPO_INST" "$REPO_SRC" "SLURM"
 
-    item_download "ompi" "$OMPI_PACK" "$OMPI_URL" "$OMPI_INST" "$OMPI_BRANCH" "$OMPI_COMMIT" \
- "--with-pmix=$PMIX_INST --with-slurm=$SLURM_INST --with-libevent=$LIBEV_INST --with-ucx=$UCX_INST --with-hwloc=$HWLOC_INST $OMPI_CONF"
+    item_download "ompi" "$OMPI_DEPLOY_PACK" "$OMPI_DEPLOY_URL" "$OMPI_DEPLOY_INST" "$OMPI_DEPLOY_BRANCH" "$OMPI_DEPLOY_COMMIT" \
+ "--with-pmix=$PMIX_DEPLOY_INST --with-slurm=$SLURM_DEPLOY_INST --with-libevent=$LIBEV_DEPLOY_INST --with-ucx=$UCX_DEPLOY_INST --with-hwloc=$HWLOC_DEPLOY_INST $OMPI_DEPLOY_CONF"
     deploy_item_save_env "$REPO_NAME" "$REPO_INST" "$REPO_SRC" "OMPI"
 }
 
@@ -285,7 +285,7 @@ function deploy_build_item() {
     cd .build || (echo_error $LINENO "directory change error" && exit 1)
 
     if [ ! -f "config.log" ]; then
-        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_INST}/lib:${LIBEV_INST}/lib:${PMIX_INST}/lib:${LD_LIBRARY_PATH} ./config.sh"
+        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_DEPLOY_INST}/lib:${LIBEV_DEPLOY_INST}/lib:${PMIX_DEPLOY_INST}/lib:${LD_LIBRARY_PATH} ./config.sh"
         if [ "$?" != "0" ]; then
             echo_error $LINENO "\"$item\" Configure error. Cannot continue."
             mv config.log config.log.bak
@@ -294,7 +294,7 @@ function deploy_build_item() {
     fi
 
     if [ ! -f ".deploy_build_flag" ]; then
-        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_INST}/lib:${LIBEV_INST}/lib:${PMIX_INST}/lib:${LD_LIBRARY_PATH} make -j $build_cpus"
+        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_DEPLOY_INST}/lib:${LIBEV_DEPLOY_INST}/lib:${PMIX_DEPLOY_INST}/lib:${LD_LIBRARY_PATH} make -j $build_cpus"
         ret=$?
         if [ "$ret" != "0" ]; then
             echo_error $LINENO "\"$item\" Build error. Cannot continue."
@@ -370,12 +370,12 @@ function deploy_slurm_update_ligth() {
 function deploy_slurm_pmix_update() {
     sdir=$(pwd)
     nodes=$(distribute_get_nodes)
-    item=$(get_item "$SLURM_INST")
+    item=$(get_item "$SLURM_DEPLOY_INST")
     cd "$SRC_DIR/$item/.build/src/plugins/mpi/pmix"
     make -j "$CPU_NUM" clean
     make -j "$CPU_NUM" install
-    for file in $(ls "$SLURM_INST/lib/slurm/mpi_pmix"*); do
-        copy_remote_nodes "$nodes" "$file" "$SLURM_INST/lib/slurm/"
+    for file in $(ls "$SLURM_DEPLOY_INST/lib/slurm/mpi_pmix"*); do
+        copy_remote_nodes "$nodes" "$file" "$SLURM_DEPLOY_INST/lib/slurm/"
     done
     cd "$sdir"
 }
@@ -384,15 +384,15 @@ function deploy_slurm_update() {
     sdir=$(pwd)
     light=$1
     nodes=$(distribute_get_nodes)
-    deploy_cleanup_item "$SLURM_INST"
+    deploy_cleanup_item "$SLURM_DEPLOY_INST"
     if [ "$light" == "light" ]; then
-        item=$(get_item "$SLURM_INST")
+        item=$(get_item "$SLURM_DEPLOY_INST")
         cd "$SRC_DIR/$item"
         make -j "$CPU_NUM" distclean
         ./config.sh
     fi
-    deploy_build_item "$SLURM_INST"
-    deploy_distribute_item "$SLURM_INST"
+    deploy_build_item "$SLURM_DEPLOY_INST"
+    deploy_distribute_item "$SLURM_DEPLOY_INST"
     cd "$sdir"
 }
 
@@ -490,16 +490,16 @@ function deploy_slurm_start() {
     if [ -n "$distribute_nodes" ]; then
         first_node=$(scontrol show hostname "$distribute_nodes" | head -n 1) # get first node for run build on it
     fi
-    slurm_ctl_node=$(ssh "$first_node" cat "$SLURM_INST/etc/local.conf" | grep ControlMachine | cut -f2 -d"=")
-    exec_remote_as_user_nodes "$slurm_ctl_node" "$SLURM_INST/sbin/slurmctld"
+    slurm_ctl_node=$(ssh "$first_node" cat "$SLURM_DEPLOY_INST/etc/local.conf" | grep ControlMachine | cut -f2 -d"=")
+    exec_remote_as_user_nodes "$slurm_ctl_node" "$SLURM_DEPLOY_INST/sbin/slurmctld"
     sleep 3
     slurm_launch
 }
 
 function deploy_slurm_stop() {
     slurm_stop_instances
-    slurm_ctl_node=$(grep ControlMachine "$SLURM_INST/etc/local.conf" | cut -f2 -d"=")
-    exec_remote_as_user_nodes "$slurm_ctl_node" "$FILES/slurm_kill.sh $SLURM_INST"
+    slurm_ctl_node=$(grep ControlMachine "$SLURM_DEPLOY_INST/etc/local.conf" | cut -f2 -d"=")
+    exec_remote_as_user_nodes "$slurm_ctl_node" "$FILES/slurm_kill.sh $SLURM_DEPLOY_INST"
 }
 
 function slurm_prepare_conf() {
@@ -510,7 +510,7 @@ function slurm_prepare_conf() {
 
     slurm_conf=$1
 
-    mkdir -p "$SLURM_INST/etc/"
+    mkdir -p "$SLURM_DEPLOY_INST/etc/"
 
     if [ -n "$slurm_conf" ]; then
         if [ ! -f "$slurm_conf" ]; then
@@ -518,7 +518,7 @@ function slurm_prepare_conf() {
             exit 1
         fi
         echo "Use config $slurm_conf"
-        cp -f "$slurm_conf" "$SLURM_INST/etc/local.conf"
+        cp -f "$slurm_conf" "$SLURM_DEPLOY_INST/etc/local.conf"
     else
         local tdir=./.conf_tmp
         rm -fR $tdir
@@ -534,8 +534,8 @@ function slurm_prepare_conf() {
         CONTROL_MACHINE=$(hostname)
         CFG_NODE_LIST=$(get_node_list)
 
-        if [ -z "$SLURM_JOB_PARTITION" ]; then
-            SLURM_JOB_PARTITION="deploy"
+        if [ -z "$SLURM_DEPLOY_JOB_PARTITION" ]; then
+            SLURM_DEPLOY_JOB_PARTITION="deploy"
         fi
 
         #generate a config file
@@ -546,27 +546,27 @@ function slurm_prepare_conf() {
             sed -e "s/@node_core_per_socket@/$CORE_PER_SOCK/g" |
             sed -e "s/@node_thread_per_core@/$THREAD_PER_CORE/g" |
             sed -e "s/@node_list@/$CFG_NODE_LIST/g" |
-            sed -e "s/@partition@/$SLURM_JOB_PARTITION/g" |
+            sed -e "s/@partition@/$SLURM_DEPLOY_JOB_PARTITION/g" |
             sed -e "s/@node_ctl@/$CONTROL_MACHINE/g" >$tdir/local.conf
 
-        cp $tdir/local.conf "$SLURM_INST/etc/"
+        cp $tdir/local.conf "$SLURM_DEPLOY_INST/etc/"
         rm -fR $tdir
     fi
 
-    SLURM_INST_ESC=$(escape_path "$SLURM_INST")
+    SLURM_DEPLOY_INST_ESC=$(escape_path "$SLURM_DEPLOY_INST")
     cat "$FILES/slurm.conf.in" |
-        sed -e "s/@SLURM_INST@/$SLURM_INST_ESC/g" |
-        sed -e "s/@SLURM_USER@/$SLURM_USER/g" >"$SLURM_INST/etc/slurm.conf"
+        sed -e "s/@SLURM_DEPLOY_INST@/$SLURM_DEPLOY_INST_ESC/g" |
+        sed -e "s/@SLURM_DEPLOY_USER@/$SLURM_DEPLOY_USER/g" >"$SLURM_DEPLOY_INST/etc/slurm.conf"
 
     nodes=$(distribute_get_nodes)
-    copy_remote_nodes "$nodes" "$SLURM_INST/etc" "$SLURM_INST"
+    copy_remote_nodes "$nodes" "$SLURM_DEPLOY_INST/etc" "$SLURM_DEPLOY_INST"
 }
 
 function deploy_ompi_remove_files() {
     remove_file_list=$(cat "$1")
     i=0
     for file in $remove_file_list; do
-        rm_files=$(find "$OMPI_INST" -name "$file")
+        rm_files=$(find "$OMPI_DEPLOY_INST" -name "$file")
         for rm_file in $rm_files; do
             echo -ne "$rm_file      "
             if rm -f "$rm_file"; then
