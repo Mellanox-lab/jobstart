@@ -14,10 +14,11 @@ NODE_LIST=@node_list@
 SLURM_DEPLOY_USER=@slurm_user@
 
 # common deploy settings
-DEPLOY_DIR=@deploy_dir@                  # deploy work directory
-SRC_DIR=@deploy_src_dir@                 # source directory
-BUILD_DIR=@deploy_build_dir@             # build directory
-INSTALL_DIR=@deploy_install_dir@         # install directory
+DEPLOY_DIR=@deploy_dir@                       # deploy work directory
+SRC_DIR=@deploy_src_dir@                      # source directory
+BUILD_DIR=@deploy_build_dir@                  # build directory
+INSTALL_DIR=@deploy_install_dir@              # install directory
+DEPLOY_EXPORT_LOCAL_ENV=@deploy_export_env@   # export to build host local PATH and LD_LIBRARY_PATH
 
 # example:
 #REPO_DEPLOY_NAME=<repo_name>

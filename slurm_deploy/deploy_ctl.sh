@@ -246,6 +246,10 @@ function deploy_build_item() {
 
     build_cpus=$(ssh "$build_node" "grep -c ^processor /proc/cpuinfo")
 
+    if [ $DEPLOY_EXPORT_LOCAL_ENV == "yes" ]; then
+        lpath="$PATH:"
+        lld_path="$LD_LIBRARY_PATH:"
+    fi
     cd "$SRC_DIR/$item"
     echo "Starting \"$item\" build"
 
@@ -256,12 +260,13 @@ function deploy_build_item() {
         tools_path="$INSTALL_DIR/tools/bin"
     fi
 
+    my_path=$lpath:$(ssh "$build_node" 'echo $PATH')
+    my_ld_path=$lld_path$(ssh "$build_node" 'echo $LD_LIBRARY_PATH')
     if [ ! -f "configure" ]; then
-        rpath=$(ssh "$build_node" 'echo $PATH')
         if [ -f "autogen.sh" ]; then
-            pdsh -S -w "$build_node" "export PATH=$tools_path:$rpath ; cd $PWD && ./autogen.sh"
+            pdsh -S -w "$build_node" "export PATH=$tools_path:$my_path && export LD_LIBRARY_PATH=$my_ld_path ; cd $PWD && ./autogen.sh"
         else
-            pdsh -S -w "$build_node" "export PATH=$tools_path:$rpath ; cd $PWD && ./autogen.pl"
+            pdsh -S -w "$build_node" "export PATH=$tools_path:$my_path && export LD_LIBRARY_PATH=$my_ld_path ; cd $PWD && ./autogen.pl"
         fi
 
         ret=$?
@@ -285,7 +290,7 @@ function deploy_build_item() {
     cd .build || (echo_error $LINENO "directory change error" && exit 1)
 
     if [ ! -f "config.log" ]; then
-        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_DEPLOY_INST}/lib:${LIBEV_DEPLOY_INST}/lib:${PMIX_DEPLOY_INST}/lib:${LD_LIBRARY_PATH} ./config.sh"
+        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_DEPLOY_INST}/lib:${LIBEV_DEPLOY_INST}/lib:${PMIX_DEPLOY_INST}/lib:${LD_LIBRARY_PATH}:$my_ld_path PATH=$my_path ./config.sh"
         if [ "$?" != "0" ]; then
             echo_error $LINENO "\"$item\" Configure error. Cannot continue."
             mv config.log config.log.bak
@@ -294,7 +299,7 @@ function deploy_build_item() {
     fi
 
     if [ ! -f ".deploy_build_flag" ]; then
-        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_DEPLOY_INST}/lib:${LIBEV_DEPLOY_INST}/lib:${PMIX_DEPLOY_INST}/lib:${LD_LIBRARY_PATH} make -j $build_cpus"
+        pdsh -S -w "$build_node" "cd $PWD && LD_LIBRARY_PATH=${HWLOC_DEPLOY_INST}/lib:${LIBEV_DEPLOY_INST}/lib:${PMIX_DEPLOY_INST}/lib:${LD_LIBRARY_PATH}:$my_ld_path PATH=$my_path make -j $build_cpus"
         ret=$?
         if [ "$ret" != "0" ]; then
             echo_error $LINENO "\"$item\" Build error. Cannot continue."
@@ -312,8 +317,8 @@ function deploy_build_item() {
     fi
 
     if [ "$item" = "slurm" ]; then
-        pdsh -S -w "$build_node" "cd $PWD/contribs/pmi && make -j $build_cpus install"
-        pdsh -S -w "$build_node" "cd $PWD/contribs/pmi2 && make -j $build_cpus install"
+        pdsh -S -w "$build_node" "export PATH=$my_path && export LD_LIBRARY_PATH=$my_ld_path ; cd $PWD/contribs/pmi && make -j $build_cpus install"
+        pdsh -S -w "$build_node" "export PATH=$my_path && export LD_LIBRARY_PATH=$my_ld_path ; cd $PWD/contribs/pmi2 && make -j $build_cpus install"
     fi
 
     cd "$sdir"
