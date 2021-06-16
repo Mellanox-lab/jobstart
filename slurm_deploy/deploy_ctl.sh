@@ -150,7 +150,6 @@ function item_download() {
     fi
 
     config=$(echo "$config " | sed -e 's/--with-[a-z]*= //g')
-    config=$(echo "$config " | sed -e 's/--without-[a-z]* //g')
 
     if [ -n "$config" ]; then
         echo "\"$REPO_NAME\": the following config will be configure : \"$config\""
