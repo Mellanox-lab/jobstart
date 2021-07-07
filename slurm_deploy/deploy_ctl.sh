@@ -591,7 +591,7 @@ function deploy_env_gen() {
         local item_env
         item_env=$(grep "$item_inst" "$DEPLOY_DIR/.deploy_env" | cut -f2 -d "=" | awk '{print $1}')
         path=$path:$item_env/bin
-        libs=$path:$item_env/lib
+        libs=$libs:$item_env/lib
     done
 
     cat >"$env_file" <<EOF
