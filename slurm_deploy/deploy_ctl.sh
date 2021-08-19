@@ -246,7 +246,7 @@ function deploy_build_item() {
 
     build_cpus=$(ssh "$build_node" "grep -c ^processor /proc/cpuinfo")
 
-    if [ $DEPLOY_EXPORT_LOCAL_ENV == "yes" ]; then
+    if [ "$DEPLOY_EXPORT_LOCAL_ENV" == "yes" ]; then
         lpath="$PATH:"
         lld_path="$LD_LIBRARY_PATH:"
     fi
