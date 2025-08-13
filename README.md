@@ -1,3 +1,5 @@
+# NOTE: The repository is currently not maintained. 
+
 # jobstart
 Jobstart-related software and information
 
